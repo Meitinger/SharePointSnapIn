@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppendLibraryUnsupported" xml:space="preserve">
+    <value>An eine Dokumentbibliothek kann nichts angefügt werden.</value>
+  </data>
+  <data name="AppendModeField" xml:space="preserve">
+    <value>Anhängen?</value>
+  </data>
+  <data name="AttributeFormatInvalid" xml:space="preserve">
+    <value>Das Format des Attributes '{0}'  ist ungültig: {1}</value>
+  </data>
+  <data name="BooleanFalseValue" xml:space="preserve">
+    <value>Nein</value>
+  </data>
+  <data name="BooleanTrueValue" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="ChangeDuringSubmit" xml:space="preserve">
+    <value>Eine Einstellung hat sich geändert. Bitte überprüfen Sie die Werte erneut.</value>
+  </data>
+  <data name="ContentTypeField" xml:space="preserve">
+    <value>Inhaltstyp</value>
+  </data>
+  <data name="EmptySelection" xml:space="preserve">
+    <value>&lt;leer&gt;</value>
+  </data>
+  <data name="ExcludeSelectionFormat" xml:space="preserve">
+    <value>- [{0}]</value>
+  </data>
+  <data name="FieldTypeUnsupported" xml:space="preserve">
+    <value>Der SharePoint Feld-Typ '{0}' wird nicht unterstützt.</value>
+  </data>
+  <data name="FileAlreadyExists" xml:space="preserve">
+    <value>Eine Datei mit diesem Namen existiert bereits.</value>
+  </data>
+  <data name="FileNameField" xml:space="preserve">
+    <value>Dateiname</value>
+  </data>
+  <data name="FolderField" xml:space="preserve">
+    <value>Zielordner</value>
+  </data>
+  <data name="IncludeSelectionFormat" xml:space="preserve">
+    <value>+ {0}</value>
+  </data>
+  <data name="InvalidCharsInFileName" xml:space="preserve">
+    <value>Der Dateiname enthält ungültige Zeichen.
+({0} sind nicht erlaubt.)</value>
+  </data>
+  <data name="ListItemField" xml:space="preserve">
+    <value>Eintrag</value>
+  </data>
+  <data name="ListNotAllowingFiles" xml:space="preserve">
+    <value>Die Liste '{0}' erlaubt keine Attachments oder Dokumente.</value>
+  </data>
+  <data name="LookupListUnsupported" xml:space="preserve">
+    <value>Die spezielle Liste '{0}' wird nicht für Nachschlagefelder unterstützt.</value>
+  </data>
+  <data name="LookupPrefixInvalid" xml:space="preserve">
+    <value>Das Attribut '{0}' hat einen ungültigen Nachschlageprefix.</value>
+  </data>
+  <data name="LookupValueTooLong" xml:space="preserve">
+    <value>Es wurden zuviele Einträge gewählt.</value>
+  </data>
+  <data name="MultipleUserMatchesFound" xml:space="preserve">
+    <value>Für den_die Benutzer_in oder Gruppe '{0}' wurden mehrfache Werte gefunden.</value>
+  </data>
+  <data name="NoMatchingContentTypes" xml:space="preserve">
+    <value>Es wurden keine passenden Inhaltstypen gefunden.</value>
+  </data>
+  <data name="NumericFormatInvalid" xml:space="preserve">
+    <value>Der Wert muss ein gültiges numerisches Format aufweisen.
+Beispiel: {0}</value>
+  </data>
+  <data name="NumericMustBeAboveMinimum" xml:space="preserve">
+    <value>Der Wert muss über {0} sein.</value>
+  </data>
+  <data name="NumericMustBeBelowMaximum" xml:space="preserve">
+    <value>Der Wert muss unter {0} sein.</value>
+  </data>
+  <data name="PathOutsideWeb" xml:space="preserve">
+    <value>Der Dateipfad '{0}' liegt außerhalb des Webpfades '{1}'.</value>
+  </data>
+  <data name="RequiredAttributeOrElementMissing" xml:space="preserve">
+    <value>Das Attribute oder Element '{0}' fehlt.</value>
+  </data>
+  <data name="RequiredFieldMissing" xml:space="preserve">
+    <value>Es muss ein Wert für '{0}' eingegeben werden.</value>
+  </data>
+  <data name="RootFolderNotFound" xml:space="preserve">
+    <value>Der angegebene Ausgangsordner '{0}' wurde nicht gefunden.</value>
+  </data>
+  <data name="UrlFormatInvalid" xml:space="preserve">
+    <value>Der Wert muss ein gültiger, absoluter URL sein.
+Beispiel: http://www.example.com/page.htm</value>
+  </data>
+  <data name="UserNotResolved" xml:space="preserve">
+    <value>Der_die Benutzer_in oder die Gruppe '{0}' konnte nicht auflösen.</value>
+  </data>
+  <data name="UserSelectionScopeUnsupported" xml:space="preserve">
+    <value>Durch Gruppen limitierte Benutzerfelder werden nicht unterstützt.</value>
+  </data>
+</root>
