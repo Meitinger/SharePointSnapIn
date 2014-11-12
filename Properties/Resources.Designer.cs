@@ -151,6 +151,16 @@ namespace SharePointSnapIn.Properties {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Der Wert des Feldes &apos;{0}&apos; ist ungültig:
+        ///{1}  ähnelt.
+        /// </summary>
+        internal static string FieldValueInvalid {
+            get {
+                return ResourceManager.GetString("FieldValueInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Eine Datei mit diesem Namen existiert bereits. ähnelt.
         /// </summary>
         internal static string FileAlreadyExists {

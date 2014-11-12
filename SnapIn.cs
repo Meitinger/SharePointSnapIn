@@ -421,7 +421,6 @@ namespace SharePointSnapIn
                         fieldMap = new Dictionary<string, SharePoint.Field>(Context.fieldMap),
                         cachedFolders = new Dictionary<string, SharePoint.Folder>(Context.cachedFolders),
                         cachedListItems = new Dictionary<string, SharePoint.ListItem>(Context.cachedListItems),
-                        lastKnownGoodValueIds = new Dictionary<string, string>(Context.lastKnownGoodValueIds),
                     };
                     LabelText = baseField.LabelText;
                 }
@@ -438,7 +437,6 @@ namespace SharePointSnapIn
             private Dictionary<string, SharePoint.Field> fieldMap = new Dictionary<string, SharePoint.Field>();
             private Dictionary<string, SharePoint.Folder> cachedFolders = new Dictionary<string, SharePoint.Folder>();
             private Dictionary<string, SharePoint.ListItem> cachedListItems = new Dictionary<string, SharePoint.ListItem>();
-            private Dictionary<string, string> lastKnownGoodValueIds = new Dictionary<string, string>();
 
             internal static Context Get(KMOAPICapture.AsForm form)
             {
@@ -616,20 +614,6 @@ namespace SharePointSnapIn
                 }
             }
 
-            internal void StoreValueId(KMOAPICapture.BaseField field)
-            {
-                // store a good value id
-                lastKnownGoodValueIds[field.Name] = field.ValueId;
-            }
-
-            internal void RestoreValueId(KMOAPICapture.BaseField field)
-            {
-                // try to restore to a good value id
-                var valueId = (string)null;
-                if (lastKnownGoodValueIds.TryGetValue(field.Name, out valueId))
-                    field.ValueId = valueId;
-            }
-
             internal bool Update(SharePoint.ListItem listItemToSelect = null)
             {
                 // get all builtin fields
@@ -764,7 +748,6 @@ namespace SharePointSnapIn
                                 autoStoreField.IsRequired = !SelectedAppending && sharePointField.IsMandatory;
                                 autoStoreField.IsHidden = SelectedAppending;
                                 autoStoreField.RaiseChangeEvent = true;
-                                StoreValueId(autoStoreField);
                             }
                             fieldMap.Add(autoStoreField.Name, sharePointField);
                             Form.Fields.Add(autoStoreField);
@@ -900,14 +883,17 @@ namespace SharePointSnapIn
         }
 
         /// <summary>
-        /// Validates a changed field.
+        /// Validates a field when its value changed or before submit.
         /// </summary>
         /// <param name="context">The current <see cref="Context"/>.</param>
         /// <param name="field">The field that was changed.</param>
-        /// <param name="result">The result of the operation.</param>
+        /// <param name="errorMessage">The description why the field is invalid or <c>null</c>.</param>
+        /// <returns><c>true</c> if the field's value is valid, <c>false</c> otherwise.</returns>
         /// <remarks>You must set <see cref="KMOAPICapture.BaseField.RaiseChangeEvent"/> for this method to get called.</remarks>
-        protected virtual void Validate(Context context, KMOAPICapture.BaseField field, KMOAPICapture.FieldChangeResult result)
+        protected virtual bool Validate(Context context, KMOAPICapture.BaseField field, out string errorMessage)
         {
+            errorMessage = null;
+            return true;
         }
 
         /// <summary>
@@ -970,10 +956,6 @@ namespace SharePointSnapIn
             Context.Create(form, state, list, settings);
             var context = Context.Get(form);
             context.Update();
-
-            // store all initial custom field values
-            foreach (var field in form.Fields.Where(f => !BuiltInFieldIds.Contains(f.Name) && context.Field(f) == null))
-                context.StoreValueId(field);
         }
 
         KMOAPICapture.FieldChangeResult KMOAPICapture.ISnapInModule.OnChange(KMOAPICapture.AsForm form, string fieldName, Dictionary<string, string> fieldData)
@@ -986,6 +968,7 @@ namespace SharePointSnapIn
             var result = new KMOAPICapture.FieldChangeResult()
             {
                 ReturnFormScreenAfterError = false,
+                FieldDialogToDisplay = fieldName,
                 Result = true,
             };
 
@@ -1006,14 +989,16 @@ namespace SharePointSnapIn
                     }
                 }
                 else
-                    // use custom validation
-                    Validate(context, autoStoreField, result);
-
-                // restore or store the value
-                if (result.Result)
-                    context.StoreValueId(autoStoreField);
-                else
-                    context.RestoreValueId(autoStoreField);
+                {
+                    // use custom validation if enabled
+                    if (autoStoreField.RaiseChangeEvent)
+                    {
+                        var errorMessage = (string)null;
+                        result.Result = Validate(context, autoStoreField, out errorMessage);
+                        if (!result.Result)
+                            result.ErrorMessage = errorMessage;
+                    }
+                }
             }
             return result;
         }
@@ -1154,7 +1139,20 @@ namespace SharePointSnapIn
                 var sharePointField = context.Field(autoStoreField);
                 if (sharePointField != null)
                 {
-                    var value = sharePointField.Parse(autoStoreField);
+                    // parse the value
+                    // NOTE: This might be a wrong value, because if the user presses cancel upon entering an
+                    //       invalid value, the wrong value gets applied anyway on the device. The only way to
+                    //       remedy this is to set FieldChangeResult.ReturnFormScreenAfterError to true, which
+                    //       isn't a nice thing to do, especially if the user enters a long value. 
+                    var value = (string)null;
+                    try { value = sharePointField.Parse(autoStoreField); }
+                    catch (FormatException e)
+                    {
+                        errorMessage = string.Format(Resources.FieldValueInvalid, autoStoreField.Display, e.Message);
+                        return false;
+                    }
+
+                    // make sure an empty value is allowed or add the parsed value
                     if (value == null)
                     {
                         // return an error if a mandatory field is missing
@@ -1168,7 +1166,15 @@ namespace SharePointSnapIn
                         sharePointValues.Add(sharePointField.InternalName, value);
                 }
                 else
+                {
+                    // validate the field and add it to the custom fields (also see the note above)
+                    if (autoStoreField.RaiseChangeEvent && !Validate(context, autoStoreField, out errorMessage))
+                    {
+                        errorMessage = string.Format(Resources.FieldValueInvalid, autoStoreField.Display, errorMessage);
+                        return false;
+                    }
                     customFields.Add(autoStoreField);
+                }
             }
 
             // finalize the form
@@ -1289,6 +1295,9 @@ namespace SharePointSnapIn
             var limitTo = SharePointPeople.SPPrincipalType.User;
             if (includeGroups)
                 limitTo |= SharePointPeople.SPPrincipalType.SecurityGroup | SharePointPeople.SPPrincipalType.SharePointGroup;
+            Component.TaskMessage.Msg("Calling SearchPrincipals:", NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    Text: " + userName, NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    Type: " + limitTo.ToString(), NSiNetUtil.MsgType.Trace);
             return people.SearchPrincipals(userName, 7, limitTo);
         }
 
@@ -1317,6 +1326,9 @@ namespace SharePointSnapIn
             names.AddRange(userNames);
 
             // resolve the principals
+            Component.TaskMessage.Msg("Calling ResolvePrincipals:", NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    Keys: " + string.Join("; ", userNames), NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    Type: " + limitTo.ToString(), NSiNetUtil.MsgType.Trace);
             return people.ResolvePrincipals(names, limitTo, true);
         }
 
@@ -1360,6 +1372,9 @@ namespace SharePointSnapIn
                 batch.Add(new XAttribute("RootFolder", folder));
 
             // perform the operation and return the row
+            Component.TaskMessage.Msg("Calling UpdateListItems:", NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    ListId: " + listId.ToString("B"), NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    Batch: " + batch.ToString(SaveOptions.DisableFormatting), NSiNetUtil.MsgType.Trace);
             var result = lists.UpdateListItems(listId.ToString("B"), batch).Element(SharePoint.BaseObject.SP + "Result");
             var errorCodeString = result.Element(SharePoint.BaseObject.SP + "ErrorCode").Value;
             var errorCode = errorCodeString.StartsWith("0x", StringComparison.Ordinal) ? int.Parse(errorCodeString.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture) : int.Parse(errorCodeString, NumberStyles.Integer, CultureInfo.InvariantCulture);
@@ -1426,6 +1441,12 @@ namespace SharePointSnapIn
                 queryOptions.Add(new XElement("ViewAttributes", new XAttribute("Scope", "RecursiveAll")));
 
             // execute the query
+            Component.TaskMessage.Msg("Calling GetListItems:", NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    ListId: " + listId.ToString("B"), NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    WebId: " + webId.ToString("B"), NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    Query: " + query.ToString(SaveOptions.DisableFormatting), NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    ViewFields: " + viewFields.ToString(SaveOptions.DisableFormatting), NSiNetUtil.MsgType.Trace);
+            Component.TaskMessage.Msg("    QueryOptions: " + queryOptions.ToString(SaveOptions.DisableFormatting), NSiNetUtil.MsgType.Trace);
             return lists.GetListItems
             (
                 listId.ToString("B"),

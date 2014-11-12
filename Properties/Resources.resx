@@ -147,6 +147,10 @@
   <data name="FieldTypeUnsupported" xml:space="preserve">
     <value>Der SharePoint Feld-Typ '{0}' wird nicht unterstützt.</value>
   </data>
+  <data name="FieldValueInvalid" xml:space="preserve">
+    <value>Der Wert des Feldes '{0}' ist ungültig:
+{1} </value>
+  </data>
   <data name="FileAlreadyExists" xml:space="preserve">
     <value>Eine Datei mit diesem Namen existiert bereits.</value>
   </data>
