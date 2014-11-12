@@ -348,6 +348,7 @@ namespace SharePointSnapIn
     /// </summary>
     public abstract class SnapIn : KMOAPICapture.ISnapInModule
     {
+        private static readonly byte[] emptyFile = new byte[1] { 0x00 };
         private static readonly Dictionary<Guid, SharePoint.List> listCache = new Dictionary<Guid, SharePoint.List>();
         private const string ContextFieldId = "SP.CONTEXT";
         private const string AppendModeFieldId = "SP.APPENDMODE";
@@ -969,7 +970,7 @@ namespace SharePointSnapIn
             Context.Create(form, state, list, settings);
             var context = Context.Get(form);
             context.Update();
-            
+
             // store all initial custom field values
             foreach (var field in form.Fields.Where(f => !BuiltInFieldIds.Contains(f.Name) && context.Field(f) == null))
                 context.StoreValueId(field);
@@ -1175,11 +1176,10 @@ namespace SharePointSnapIn
                 return false;
 
             // store the list id and append mode
-            fieldData[ContextFieldId] = listId.ToString("B");
+            fieldData[ContextFieldId] = context.List.Id.ToString("B");
             fieldData[AppendModeFieldId] = context.SelectedAppending.ToString(CultureInfo.InvariantCulture);
 
             // create the item if we're not appending
-            var currentItem = context.SelectedListItem;
             if (!context.SelectedAppending)
             {
                 // set and store the content type
@@ -1189,19 +1189,16 @@ namespace SharePointSnapIn
                 // handle the different list types
                 if (context.List.BaseType == SharePoint.BaseType.DocumentLibrary)
                 {
-                    // prepare the update operation
+                    // prepare the update operation and store the path
                     sharePointValues.Add("ID", string.Empty);
                     sharePointValues.Add("FileRef", path);
+                    fieldData[ListItemFieldId] = path;
 
                     // touch the file
-                    File.WriteAllBytes(localPath, new byte[0] { });
+                    File.WriteAllBytes(localPath, emptyFile);
 
-                    // set the fields and store the document's id
-                    try
-                    {
-                        var itemXml = context.List.SnapIn.UpdateListItem(context.List.Id, context.List.Version, null, SnapInListItemCommand.Update, sharePointValues);
-                        currentItem = new SharePoint.ListItem(context.List, context.SelectedSubFolder ?? context.Settings.RootFolder, itemXml);
-                    }
+                    // set the fields
+                    try { context.List.SnapIn.UpdateListItem(context.List.Id, context.List.Version, null, SnapInListItemCommand.Update, sharePointValues); }
                     catch
                     {
                         // remove the file upon error
@@ -1214,30 +1211,36 @@ namespace SharePointSnapIn
                 {
                     // create the new list item
                     var itemXml = context.List.SnapIn.UpdateListItem(context.List.Id, context.List.Version, context.SelectedSubFolder == null ? context.Settings.RootFolderPath : context.SelectedSubFolder.Path, SnapInListItemCommand.New, sharePointValues);
-                    currentItem = new SharePoint.ListItem(context.List, context.SelectedSubFolder ?? context.Settings.RootFolder, itemXml);
+                    var createdItem = new SharePoint.ListItem(context.List, context.SelectedSubFolder ?? context.Settings.RootFolder, itemXml);
 
-                    // complete the pathes
-                    var idString = currentItem.Id.ToString(CultureInfo.InvariantCulture);
+                    // store the id and complete the pathes
+                    var idString = createdItem.Id.ToString(CultureInfo.InvariantCulture);
+                    fieldData[ListItemFieldId] = idString;
                     localPath = Path.Combine(Path.Combine(localPath, idString), fileName);
                     path += "/" + idString + "/" + fileName;
+
+                    // add a pseudo attachment and select the new item
+                    lists.AddAttachment(context.List.Id.ToString("B"), idString, fileName, emptyFile);
+                    if (context.Settings.AppendMode != SnapInAppendMode.Never)
+                        context.Update(createdItem);
                 }
             }
             else
-                // store an empty content type
+            {
+                // store an empty content type and the selected item id
                 fieldData[ContentTypeFieldId] = string.Empty;
+                var idString = context.SelectedListItem.Id.ToString(CultureInfo.InvariantCulture);
+                fieldData[ListItemFieldId] = idString;
 
-            // store the item properties
-            fieldData[ListItemFieldId] = currentItem.Id.ToString(CultureInfo.InvariantCulture);
+                // make sure we do the right thing and add a pseudo attachment
+                if (context.List.BaseType == SharePoint.BaseType.DocumentLibrary)
+                    throw new NotSupportedException();
+                lists.AddAttachment(context.List.Id.ToString("B"), idString, fileName, emptyFile);
+            }
+
+            // store the directory and file name
             fieldData[FolderFieldId] = Path.GetDirectoryName(localPath);
             fieldData[FileNameFieldId] = Path.GetFileName(localPath);
-
-            // add a pseudo attachment and update the context for lists
-            if (context.List.BaseType != SharePoint.BaseType.DocumentLibrary)
-            {
-                lists.AddAttachment(context.List.Id.ToString("B"), currentItem.Id.ToString(CultureInfo.InvariantCulture), fileName, new byte[0] { });
-                if (context.Settings.AppendMode != SnapInAppendMode.Never)
-                    context.Update(currentItem); // NOTE: this must be the last thing to call
-            }
 
             // return success
             errorMessage = null;
@@ -1325,7 +1328,7 @@ namespace SharePointSnapIn
         /// <param name="folder">The root folder where to create items or <c>null</c>.</param>
         /// <param name="command">The command to perform.</param>
         /// <param name="values">The field values.</param>
-        /// <returns>The row of the item.</returns>
+        /// <returns>The row of the <see cref="SnapInListItemCommand.New"/> item.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="listId"/> is <see cref="Guid.Empty"/> or <paramref name="values"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="listVersion"/> is less than 0 or <paramref name="values"/> is empty.</exception>
         /// <exception cref="Win32Exception">An exception occured when performing the operation on the server.</exception>
