@@ -171,7 +171,7 @@
     <value>Eintrag</value>
   </data>
   <data name="ListNotAllowingFiles" xml:space="preserve">
-    <value>Die Liste '{0}' erlaubt keine Attachments oder Dokumente.</value>
+    <value>Die Liste erlaubt keine Attachments oder Dokumente.</value>
   </data>
   <data name="LookupListUnsupported" xml:space="preserve">
     <value>Die spezielle Liste '{0}' wird nicht für Nachschlagefelder unterstützt.</value>

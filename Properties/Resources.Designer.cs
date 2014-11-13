@@ -216,7 +216,7 @@ namespace SharePointSnapIn.Properties {
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Zeichenfolge, die Die Liste &apos;{0}&apos; erlaubt keine Attachments oder Dokumente. ähnelt.
+        ///   Sucht eine lokalisierte Zeichenfolge, die Die Liste erlaubt keine Attachments oder Dokumente. ähnelt.
         /// </summary>
         internal static string ListNotAllowingFiles {
             get {
