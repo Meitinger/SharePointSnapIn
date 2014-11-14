@@ -644,7 +644,7 @@ namespace SharePointSnapIn.SharePoint
             InternalName = Get<string>("Name");
             DisplayName = Get<string>("DisplayName");
             var def = xml.Element(SP + "DefaultFormulaValue") ?? xml.Element(SP + "Default");
-            DefaultValue = def == null ? null : def.Value;
+            DefaultValue = def == null || string.IsNullOrEmpty(def.Value) ? null : def.Value;
             IsMandatory = GetOptional<bool>("Required");
         }
 
