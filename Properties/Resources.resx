@@ -144,6 +144,9 @@
   <data name="ExcludeSelectionFormat" xml:space="preserve">
     <value>- [{0}]</value>
   </data>
+  <data name="FieldInternalNameShortened" xml:space="preserve">
+    <value>Der Feldname {0} wurde verkürzt zu {1}.</value>
+  </data>
   <data name="FieldTypeUnsupported" xml:space="preserve">
     <value>Der SharePoint Feld-Typ '{0}' wird nicht unterstützt.</value>
   </data>

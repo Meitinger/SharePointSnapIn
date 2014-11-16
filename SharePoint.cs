@@ -644,7 +644,7 @@ namespace SharePointSnapIn.SharePoint
             InternalName = Get<string>("Name");
             DisplayName = Get<string>("DisplayName");
             var def = xml.Element(SP + "DefaultFormulaValue") ?? xml.Element(SP + "Default");
-            DefaultValue = def == null || string.IsNullOrEmpty(def.Value) ? null : def.Value;
+            DefaultValue = def == null ? string.Empty : def.Value.Trim();
             IsMandatory = GetOptional<bool>("Required");
         }
 
@@ -698,7 +698,7 @@ namespace SharePointSnapIn.SharePoint
         /// Converts the AutoStore field's value to the corresponding SharePoint value.
         /// </summary>
         /// <param name="field">The AutoStore field.</param>
-        /// <returns>A string value that fits this field's SharePoint schema or <c>null</c> if no value was specified.</returns>
+        /// <returns>A string value that fits this field's SharePoint schema or an empty string if no value was specified.</returns>
         public abstract string Parse(KMOAPICapture.BaseField field);
 
         /// <summary>
@@ -754,7 +754,7 @@ namespace SharePointSnapIn.SharePoint
             : base(list, xml)
         {
             HasFillInChoice = GetOptional<bool>("FillInChoice");
-            Choices = Array.AsReadOnly(GetElement(SP + "CHOICES").Elements(SP + "CHOICE").Select(e => e.Value).ToArray());
+            Choices = Array.AsReadOnly(GetElement(SP + "CHOICES").Elements(SP + "CHOICE").Select(e => e.Value.Trim()).Where(s => s.Length > 0).ToArray());
         }
 
         /// <summary>
@@ -805,7 +805,7 @@ namespace SharePointSnapIn.SharePoint
             // return a text field because numeric fields can't handle floating point input.
             return new KMOAPICapture.TextField()
             {
-                Value = DefaultValue == null ? string.Empty : Format(double.Parse(DefaultValue, CultureInfo.InvariantCulture)),
+                Value = DefaultValue.Length == 0 ? string.Empty : Format(double.Parse(DefaultValue, CultureInfo.InvariantCulture)),
                 MaxChars = 255,
             };
         }
@@ -821,13 +821,17 @@ namespace SharePointSnapIn.SharePoint
         /// Converts the AutoStore field's value to the corresponding SharePoint value.
         /// </summary>
         /// <param name="field">The <see cref="KMOAPICapture.TextField"/> returned by <see cref="BaseNumberField.CreateAutoStoreField"/>.</param>
-        /// <returns>A culture invariant string of the number or <c>null</c> if no value was specified.</returns>
+        /// <returns>A culture invariant string of the number or an empty string if no value was specified.</returns>
         public override string Parse(KMOAPICapture.BaseField field)
         {
             // make sure there is an input
-            var value = (field as KMOAPICapture.TextField).Value.Trim();
+            var textField = field as KMOAPICapture.TextField;
+            var value = textField.Value.Trim();
             if (value.Length == 0)
-                return null;
+            {
+                textField.Value = string.Empty;
+                return string.Empty;
+            }
 
             // parse the value and check if its within range
             double v = default(double);
@@ -837,6 +841,9 @@ namespace SharePointSnapIn.SharePoint
                 throw new FormatException(string.Format(Resources.NumericMustBeAboveMinimum, Format(Minimum.Value)));
             if (Maximum.HasValue && v > Maximum.Value)
                 throw new FormatException(string.Format(Resources.NumericMustBeBelowMaximum, Format(Maximum.Value)));
+
+            // store the nicely formatted value
+            textField.Value = Format(v);
 
             // return the value as culture invariant string
             return v.ToString(CultureInfo.InvariantCulture);
@@ -871,7 +878,7 @@ namespace SharePointSnapIn.SharePoint
                 {
                     SuggestionListType = KMOAPICapture.TextSuggestionListType.List,
                     SuggestionList = new List<string>(Choices),
-                    Value = DefaultValue ?? string.Empty,
+                    Value = DefaultValue,
                     MaxChars = 255,
                 };
             }
@@ -893,20 +900,22 @@ namespace SharePointSnapIn.SharePoint
         /// Converts the AutoStore field's value to the corresponding SharePoint value.
         /// </summary>
         /// <param name="field">The <see cref="KMOAPICapture.TextField"/> or <see cref="KMOAPICapture.ListFieldEx"/> returned by <see cref="ChoiceField.CreateAutoStoreField"/>.</param>
-        /// <returns>The selected choice <c>null</c> if no value was entered or selected.</returns>
+        /// <returns>The selected choice or an empty string if no value was entered or selected.</returns>
         public override string Parse(KMOAPICapture.BaseField field)
         {
             if (HasFillInChoice)
             {
                 // trim the input and return it if it's not empty
-                var value = (field as KMOAPICapture.TextField).Value.Trim();
-                return value.Length == 0 ? null : value;
+                var textField = field as KMOAPICapture.TextField;
+                var value = textField.Value.Trim();
+                textField.Value = value;
+                return value;
             }
             else
             {
                 // return the selected choice if there is one
                 var selected = (field as KMOAPICapture.ListFieldEx).Items.SingleOrDefault(e => e.Selected);
-                return selected == null ? null : selected.Value;
+                return selected == null ? string.Empty : selected.Value;
             }
         }
     }
@@ -1000,7 +1009,7 @@ namespace SharePointSnapIn.SharePoint
             {
                 DateTimeType = Format == DateTimeFormat.DateOnly ? KMOAPICapture.DateTimeFieldType.Date : KMOAPICapture.DateTimeFieldType.DateAndTime,
                 DefaultToNow = false,
-                DateTimeValue = DefaultValue != null ? DateTimeOffset.ParseExact(DefaultValue, FormatString, CultureInfo.InvariantCulture) : EmptyDateTime,
+                DateTimeValue = DefaultValue.Length == 0 ? EmptyDateTime : DateTimeOffset.ParseExact(DefaultValue, FormatString, CultureInfo.InvariantCulture),
             };
         }
 
@@ -1008,12 +1017,12 @@ namespace SharePointSnapIn.SharePoint
         /// Converts the AutoStore field's value to the corresponding SharePoint value.
         /// </summary>
         /// <param name="field">The <see cref="KMOAPICapture.DateTimeField"/> returned by <see cref="DateTimeField.CreateAutoStoreField"/>.</param>
-        /// <returns>The value in <c>yyyy-MM-ddTHH:mm:ss:Z</c> format or <c>null</c> if no date was selected.</returns>
+        /// <returns>The value in <c>yyyy-MM-ddTHH:mm:ss:Z</c> format or an empty string if no date was selected.</returns>
         public override string Parse(KMOAPICapture.BaseField field)
         {
             // return the formatted value or null if "no" value was entered
             var value = (field as KMOAPICapture.DateTimeField).DateTimeValue;
-            return value == EmptyDateTime ? null : value.ToString(FormatString, CultureInfo.InvariantCulture);
+            return value == EmptyDateTime ? string.Empty : value.ToString(FormatString, CultureInfo.InvariantCulture);
         }
     }
 
@@ -1102,27 +1111,19 @@ namespace SharePointSnapIn.SharePoint
         /// Converts the AutoStore field's value to the corresponding SharePoint value.
         /// </summary>
         /// <param name="field">The <see cref="KMOAPICapture.ListFieldEx"/> returned by <see cref="LookupField.CreateAutoStoreField"/>.</param>
-        /// <returns>The selected lookup id(s) or <c>null</c> if no entry was selected.</returns>
+        /// <returns>The selected lookup id(s) or an empty string if no entry was selected.</returns>
         public override string Parse(KMOAPICapture.BaseField field)
         {
+            // get the selected item(s) value(s)
             var items = (field as KMOAPICapture.ListFieldEx).Items;
             var value = (string)null;
-            if (AllowMultipleValues)
+            if (!AllowMultipleValues)
             {
-                // concat multiple values
-                var selectedEntries = items.Where(e => e.Selected);
-                if (!selectedEntries.Any())
-                    return null;
-                value = string.Join(";#", selectedEntries.Select(e => e.Value));
+                var selected = items.SingleOrDefault(e => e.Selected);
+                value = selected == null ? string.Empty : selected.Value;
             }
             else
-            {
-                // return the single selected lookup value or null
-                var selectedEntry = items.SingleOrDefault(e => e.Selected);
-                if (selectedEntry == null)
-                    return null;
-                value = selectedEntry.Value;
-            }
+                value = string.Join(";#", items.Where(e => e.Selected).Select(e => e.Value));
 
             // check the length of the value
             if (!HasUnlimitedLength && value.Length > 255)
@@ -1203,7 +1204,7 @@ namespace SharePointSnapIn.SharePoint
                 {
                     IsSuggestionListDynamic = true,
                     SuggestionListType = KMOAPICapture.TextSuggestionListType.Search,
-                    Value = (DefaultValue ?? string.Empty) + ";#",
+                    Value = DefaultValue + ";#",
                     MaxChars = 255,
                 };
             }
@@ -1225,14 +1226,20 @@ namespace SharePointSnapIn.SharePoint
         /// Converts the AutoStore field's value to the corresponding SharePoint value.
         /// </summary>
         /// <param name="field">The <see cref="KMOAPICapture.TextField"/> or <see cref="KMOAPICapture.ListFieldEx"/> returned by <see cref="MultipleChoiceField.CreateAutoStoreField"/>.</param>
-        /// <returns>The concatenated values or <c>null</c> if no choice was entered or selected.</returns>
+        /// <returns>The concatenated values or an empty string if no choice was entered or selected.</returns>
         public override string Parse(KMOAPICapture.BaseField field)
         {
             // get the selected values
-            var entries = HasFillInChoice ?
-                (field as KMOAPICapture.TextField).Value.Split(new string[] { ";#" }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => s.Length > 0) :
-                (field as KMOAPICapture.ListFieldEx).Items.Where(e => e.Selected).Select(e => e.Value);
-            return entries.Any() ? ";#" + string.Join(";#", entries) + ";#" : null;
+            var entries = (IEnumerable<string>)null;
+            if (HasFillInChoice)
+            {
+                var textField = field as KMOAPICapture.TextField;
+                entries = textField.Value.Split(new string[] { ";#" }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => s.Length > 0);
+                textField.Value = string.Join(";#", entries) + ";#";
+            }
+            else
+                entries = (field as KMOAPICapture.ListFieldEx).Items.Where(e => e.Selected).Select(e => e.Value);
+            return entries.Any() ? ";#" + string.Join(";#", entries) + ";#" : string.Empty;
         }
     }
 
@@ -1261,7 +1268,7 @@ namespace SharePointSnapIn.SharePoint
             // create a plain ole text field
             return new KMOAPICapture.TextField()
             {
-                Value = DefaultValue ?? string.Empty,
+                Value = DefaultValue,
                 MaxChars = MaxLength,
             };
         }
@@ -1270,12 +1277,14 @@ namespace SharePointSnapIn.SharePoint
         /// Converts the AutoStore field's value to the corresponding SharePoint value.
         /// </summary>
         /// <param name="field">The <see cref="KMOAPICapture.TextField"/> returned by <see cref="TextField.CreateAutoStoreField"/>.</param>
-        /// <returns>The trimmed value or <c>null</c> if no text was entered.</returns>
+        /// <returns>The trimmed entered value.</returns>
         public override string Parse(KMOAPICapture.BaseField field)
         {
             // make sure there is an input and return it
-            var value = (field as KMOAPICapture.TextField).Value.Trim();
-            return value.Length == 0 ? null : value;
+            var textField = field as KMOAPICapture.TextField;
+            var value = textField.Value.Trim();
+            textField.Value = value;
+            return value;
         }
     }
 
@@ -1350,7 +1359,7 @@ namespace SharePointSnapIn.SharePoint
             // create a validating text field
             return new KMOAPICapture.TextField()
             {
-                Value = DefaultValue ?? string.Empty,
+                Value = DefaultValue,
                 MaxChars = 255,
             };
         }
@@ -1359,18 +1368,23 @@ namespace SharePointSnapIn.SharePoint
         /// Converts the AutoStore field's value to the corresponding SharePoint value.
         /// </summary>
         /// <param name="field">The <see cref="KMOAPICapture.TextField"/> returned by <see cref="UrlField.CreateAutoStoreField"/>.</param>
-        /// <returns>The escaped url including its description or <c>null</c> if no url was specified.</returns>
+        /// <returns>The escaped url including its description or an empty string if no url was specified.</returns>
         public override string Parse(KMOAPICapture.BaseField field)
         {
             // make sure there is an input
-            var value = (field as KMOAPICapture.TextField).Value.Trim();
+            var textField = field as KMOAPICapture.TextField;
+            var value = textField.Value.Trim();
             if (value.Length == 0)
-                return null;
+            {
+                textField.Value = string.Empty;
+                return string.Empty;
+            }
 
             // duplicate every colon and append the uri as description
             var uri = (Uri)null;
             if (!Uri.TryCreate(value, UriKind.Absolute, out uri))
                 throw new FormatException(Resources.UrlFormatInvalid);
+            textField.Value = uri.AbsoluteUri;
             return uri.AbsoluteUri.Replace(",", ",,") + ", " + uri.ToString();
         }
     }
@@ -1462,14 +1476,17 @@ namespace SharePointSnapIn.SharePoint
         /// Converts the AutoStore field's value to the corresponding SharePoint value.
         /// </summary>
         /// <param name="field">The <see cref="KMOAPICapture.TextField"/> returned by <see cref="UserField.CreateAutoStoreField"/>.</param>
-        /// <returns>The principal(s) lookup value or <c>null</c> if no user or group was specified.</returns>
+        /// <returns>The principal(s) lookup value or an empty string if no user or group was specified.</returns>
         public override string Parse(KMOAPICapture.BaseField field)
         {
             // get the trimmed names(s)
-            var value = (field as KMOAPICapture.TextField).Value;
-            var names = (AllowMultipleValues ? value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries) : new string[] { value }).Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
+            var textField = field as KMOAPICapture.TextField;
+            var names = (AllowMultipleValues ? textField.Value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries) : new string[] { textField.Value }).Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
             if (names.Length == 0)
-                return null;
+            {
+                textField.Value = string.Empty;
+                return string.Empty;
+            }
 
             // resolve and check the principals
             var principals = List.SnapIn.ResolvePrincipals(names, SelectionMode == UserSelectionMode.PeopleAndGroups);
@@ -1480,6 +1497,9 @@ namespace SharePointSnapIn.SharePoint
                 if (principals[i].MoreMatches != null && principals[i].MoreMatches.Length > 0)
                     throw new FormatException(string.Format(Resources.MultipleUserMatchesFound, names[i]));
             }
+
+            // store the value
+            textField.Value = string.Join("; ", principals.Select(p => p.AccountName).Distinct(StringComparer.OrdinalIgnoreCase));
 
             // return the ids
             return string.Join(";#", principals.Select(p => p.UserInfoID).Distinct().Select(id => id.ToString(CultureInfo.InvariantCulture) + ";#"));

@@ -743,7 +743,20 @@ namespace SharePointSnapIn
                             if (!reverseMap.TryGetValue(sharePointField, out autoStoreField))
                             {
                                 autoStoreField = sharePointField.CreateAutoStoreField();
-                                autoStoreField.Name = sharePointField.InternalName.Length > 16 ? sharePointField.InternalName.Substring(0, 16) : sharePointField.InternalName;
+                                var name = sharePointField.InternalName;
+                                if (name.Length > 16)
+                                {
+                                    // find a shorter name
+                                    var i = 1;
+                                    do
+                                    {
+                                        var suffix = "." + i++.ToString(CultureInfo.InvariantCulture);
+                                        name = sharePointField.InternalName.Substring(0, 16 - suffix.Length) + suffix;
+                                    }
+                                    while (fieldMap.ContainsKey(name));
+                                    List.SnapIn.Component.TaskMessage.Msg(string.Format(Resources.FieldInternalNameShortened, sharePointField.InternalName, name), NSiNetUtil.MsgType.Warning);
+                                }
+                                autoStoreField.Name = name;
                                 autoStoreField.Display = sharePointField.DisplayName;
                                 autoStoreField.IsRequired = !SelectedAppending && sharePointField.IsMandatory;
                                 autoStoreField.IsHidden = SelectedAppending;
@@ -1153,7 +1166,7 @@ namespace SharePointSnapIn
                     }
 
                     // make sure an empty value is allowed or add the parsed value
-                    if (value == null)
+                    if (value.Length == 0)
                     {
                         // return an error if a mandatory field is missing
                         if (sharePointField.IsMandatory)
@@ -1162,8 +1175,7 @@ namespace SharePointSnapIn
                             return false;
                         }
                     }
-                    else
-                        sharePointValues.Add(sharePointField.InternalName, value);
+                    sharePointValues.Add(sharePointField.InternalName, value);
                 }
                 else
                 {

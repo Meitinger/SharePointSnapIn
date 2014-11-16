@@ -142,6 +142,15 @@ namespace SharePointSnapIn.Properties {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Der Feldname {0} wurde verkürzt zu {1}. ähnelt.
+        /// </summary>
+        internal static string FieldInternalNameShortened {
+            get {
+                return ResourceManager.GetString("FieldInternalNameShortened", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Der SharePoint Feld-Typ &apos;{0}&apos; wird nicht unterstützt. ähnelt.
         /// </summary>
         internal static string FieldTypeUnsupported {
