@@ -1311,11 +1311,12 @@ namespace SharePointSnapIn.SharePoint
         /// <returns>The value's string as it would appear on SharePoint itself.</returns>
         protected override string Format(double value)
         {
-            // return the culture specific string
-            var format = ShowAsPercentage ? "P" : "N";
-            if (DecimalPlaces.HasValue)
-                format += DecimalPlaces.Value.ToString(CultureInfo.InvariantCulture);
-            return value.ToString(format, CultureInfo.CurrentCulture);
+            // find the appropriate decimal places and return the culture specific string
+            var adjustedValue = ShowAsPercentage ? value * 100.0 : value;
+            var decimals =
+                DecimalPlaces.HasValue ? DecimalPlaces.Value :
+                (15 - adjustedValue.ToString("N15", CultureInfo.InvariantCulture).Reverse().TakeWhile(c => c == '0').Count());
+            return value.ToString((ShowAsPercentage ? "P" : "N") + decimals.ToString(CultureInfo.InvariantCulture), CultureInfo.CurrentCulture);
         }
 
         /// <summary>
