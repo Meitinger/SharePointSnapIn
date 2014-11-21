@@ -179,7 +179,7 @@ suggestion, you could do something like this:
             IsSuggestionListDynamic = true,
             SuggestionListType = KMOAPICapture.TextSuggestionListType.List,
             Value = string.Empty,
-			RaiseChangeEvent = true,
+            RaiseChangeEvent = true,
         });
         return new State();
     }
