@@ -7,9 +7,9 @@ Description
 This library is used together with NSi AutoStore and the Konica Minolta Capture
 component. It provides an alternative implementation to the SharePoint form and
 filter/route component with the following advantages:
-- Input fields are just as they are on SharePoint, meaning that lookup columns
-  show the choices, numeric columns are properly parsed and checked, user and
-  group fields allow searching for SharePoint principals, and so on.
+- Input fields behave just as they do on SharePoint, meaning that a lookup
+  column shows its choices, numeric columns are properly formatted and checked,
+  user and group fields allow searching for SharePoint principals, and so on.
 - When lists are used instead of document libraries, this library allows users
   not only to create new list items but also append attachments to existing
   ones.
@@ -40,14 +40,15 @@ you're running Windows Server, install the *Desktop Experience* feature.
 If you're accessing SharePoint via a FQDN, make sure the client credentials are
 forwarded properly, see http://support.microsoft.com/kb/943280.
 You can test it by running the following command as your AutoStore batch user:
+
     echo "Hello World!" > \\<sharepoint-server-fqdn>[@SSL[@<port>]]\DavWWWRoot\<site>\<doklib>\test.txt
 
 Next copy the library to `%ProgramFiles(x86)%\NSi\AutoStore Foundation 6`,
 launch AutoStore Process Designer, create a 'Basic Form' (consult the AutoStore
 documentation for help) and click on the 'Create / Edit Snap-In' button.
-Click on 'References' and add the previously copied library path to the list.
-Now copy the following snippet into the script, replace the two strings and the
-GUID with the appropriate values, save the script and close the editor.
+Click on 'References' and add the path to the previously copied library to the
+list. Now copy the following snippet into the script, replace the two strings
+and the GUID with the appropriate values, save the script and close the editor.
 
     using System;
     using SharePointSnapIn;
@@ -79,9 +80,9 @@ Settings and Advanced Usage
 ---------------------------
 There are a couple of `protected virtual` methods in the `SnapIn` class that
 can be overridden to customize its behavior and extend its functionality.
-All of them are documented in the source code, but usually the only method you
-will want to change is `Initialize` unless you want to implement custom fields,
-which is covered in the second example.
+All of them are documented in the source code, but usually the only method
+you'll want to change is `Initialize`, unless you want to implement custom
+fields, which is covered in the second example.
 But first let's look at the following example of a monthly expense report form:
 
     protected override object Initialize(KMOAPICapture.AsForm form, SharePointSnapIn.SharePoint.List list, SharePointSnapIn.SnapInSettings settings)
@@ -157,8 +158,8 @@ on user:
 
 The above code creates a list field that is filled with all direct subordinates
 and that replaces the SharePoint field.
-If instead you wanted the user to just have his or her subordinates as
-suggestion, you could do something like this:
+If instead you wanted the user to just have his or her subordinates listed as
+suggestions, you could do something like this:
 
     private class State
     {
