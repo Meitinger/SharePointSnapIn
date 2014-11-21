@@ -1312,10 +1312,9 @@ namespace SharePointSnapIn.SharePoint
         protected override string Format(double value)
         {
             // find the appropriate decimal places and return the culture specific string
-            var adjustedValue = ShowAsPercentage ? value * 100.0 : value;
-            var decimals =
-                DecimalPlaces.HasValue ? DecimalPlaces.Value :
-                (15 - adjustedValue.ToString("N15", CultureInfo.InvariantCulture).Reverse().TakeWhile(c => c == '0').Count());
+            var decimals = DecimalPlaces.HasValue ?
+                DecimalPlaces.Value :
+                (15 - (ShowAsPercentage ? value * 100.0 : value).ToString("N15", CultureInfo.InvariantCulture).Reverse().TakeWhile(c => c == '0').Count());
             return value.ToString((ShowAsPercentage ? "P" : "N") + decimals.ToString(CultureInfo.InvariantCulture), CultureInfo.CurrentCulture);
         }
 
@@ -1396,14 +1395,14 @@ namespace SharePointSnapIn.SharePoint
     public enum UserSelectionMode
     {
         /// <summary>
+        /// Specifies that both individuals and groups can be selected. (This is the default.)
+        /// </summary>
+        PeopleAndGroups,
+
+        /// <summary>
         /// Specifies that only inidividual users can be selected.
         /// </summary>
         PeopleOnly,
-
-        /// <summary>
-        /// Specifies that both individuals and groups can be selected.
-        /// </summary>
-        PeopleAndGroups,
     }
 
     /// <summary>
@@ -1417,7 +1416,7 @@ namespace SharePointSnapIn.SharePoint
             AllowMultipleValues = GetOptional<bool>("Mult");
             if (GetOptional<int>("UserSelectionScope") != 0)
                 throw new NotSupportedException(Resources.UserSelectionScopeUnsupported);
-            SelectionMode = Get<UserSelectionMode>("UserSelectionMode");
+            SelectionMode = GetOptional<UserSelectionMode>("UserSelectionMode");
         }
 
         /// <summary>
