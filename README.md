@@ -128,7 +128,7 @@ on user:
 
     private string[] GetLogonNamesOfDirectReportsFromUser(KMOAPICapture.UserInfo user)
     {
-        // the implementation if this method is beyond the scope of this example
+        // the implementation of this method is beyond the scope of this example
         ...
     }
 
@@ -193,7 +193,7 @@ suggestions, you could do something like this:
 
     private string[] GetLogonNamesOfDirectReportsFromUser(KMOAPICapture.UserInfo user)
     {
-        // the implementation if this method is beyond the scope of this example
+        // the implementation of this method is beyond the scope of this example
         ...
     }
 
